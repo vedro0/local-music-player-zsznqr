@@ -1,161 +1,256 @@
-import React from "react";
-import { Stack, Link } from "expo-router";
-import { FlatList, Pressable, StyleSheet, View, Text, Alert, Platform } from "react-native";
-import { IconSymbol } from "@/components/IconSymbol";
-import { GlassView } from "expo-glass-effect";
-import { useTheme } from "@react-navigation/native";
 
-const ICON_COLOR = "#007AFF";
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Stack, router } from 'expo-router';
+import { IconSymbol } from '@/components/IconSymbol';
+import { SongItem } from '@/components/SongItem';
+import { MusicPlayerControls } from '@/components/MusicPlayerControls';
+import { useMusicPlayer } from '@/hooks/useMusicPlayer';
+import { Song } from '@/types/music';
+import { colors, commonStyles } from '@/styles/commonStyles';
+import { useTheme } from '@react-navigation/native';
+
+// Mock data for demonstration
+const mockSongs: Song[] = [
+  {
+    id: '1',
+    title: 'Пример песни 1',
+    artist: 'Исполнитель 1',
+    album: 'Альбом 1',
+    duration: 180000, // 3 minutes
+    uri: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
+  },
+  {
+    id: '2',
+    title: 'Пример песни 2',
+    artist: 'Исполнитель 2',
+    album: 'Альбом 2',
+    duration: 240000, // 4 minutes
+    uri: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
+  },
+  {
+    id: '3',
+    title: 'Длинное название песни для проверки',
+    artist: 'Исполнитель с длинным именем',
+    album: 'Альбом с очень длинным названием',
+    duration: 210000, // 3.5 minutes
+    uri: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
+  },
+  {
+    id: '4',
+    title: 'Классическая музыка',
+    artist: 'Композитор',
+    album: 'Классика',
+    duration: 300000, // 5 minutes
+    uri: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
+  },
+];
 
 export default function HomeScreen() {
   const theme = useTheme();
-  const modalDemos = [
-    {
-      title: "Standard Modal",
-      description: "Full screen modal presentation",
-      route: "/modal",
-      color: "#007AFF",
-    },
-    {
-      title: "Form Sheet",
-      description: "Bottom sheet with detents and grabber",
-      route: "/formsheet",
-      color: "#34C759",
-    },
-    {
-      title: "Transparent Modal",
-      description: "Overlay without obscuring background",
-      route: "/transparent-modal",
-      color: "#FF9500",
-    }
-  ];
+  const { playbackState, loadSong, togglePlayPause, seekTo } = useMusicPlayer();
+  const [songs] = useState<Song[]>(mockSongs);
 
-  const renderModalDemo = ({ item }: { item: (typeof modalDemos)[0] }) => (
-    <GlassView style={[
-      styles.demoCard,
-      Platform.OS !== 'ios' && { backgroundColor: theme.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
-    ]} glassEffectStyle="regular">
-      <View style={[styles.demoIcon, { backgroundColor: item.color }]}>
-        <IconSymbol name="square.grid.3x3" color="white" size={24} />
-      </View>
-      <View style={styles.demoContent}>
-        <Text style={[styles.demoTitle, { color: theme.colors.text }]}>{item.title}</Text>
-        <Text style={[styles.demoDescription, { color: theme.dark ? '#98989D' : '#666' }]}>{item.description}</Text>
-      </View>
-      <Link href={item.route as any} asChild>
-        <Pressable>
-          <GlassView style={[
-            styles.tryButton,
-            Platform.OS !== 'ios' && { backgroundColor: theme.dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)' }
-          ]} glassEffectStyle="clear">
-            <Text style={[styles.tryButtonText, { color: theme.colors.primary }]}>Try It</Text>
-          </GlassView>
-        </Pressable>
-      </Link>
-    </GlassView>
-  );
+  const handleSongPress = async (song: Song) => {
+    try {
+      console.log('Loading song:', song.title);
+      await loadSong(song);
+      // Auto-play after loading
+      setTimeout(() => {
+        togglePlayPause();
+      }, 500);
+    } catch (error) {
+      console.error('Error loading song:', error);
+      Alert.alert('Ошибка', 'Не удалось загрузить песню');
+    }
+  };
+
+  const handleSeek = async (position: number) => {
+    try {
+      await seekTo(position);
+    } catch (error) {
+      console.error('Error seeking:', error);
+    }
+  };
 
   const renderHeaderRight = () => (
-    <Pressable
-      onPress={() => Alert.alert("Not Implemented", "This feature is not implemented yet")}
-      style={styles.headerButtonContainer}
+    <TouchableOpacity
+      onPress={() => Alert.alert('Поиск', 'Функция поиска будет добавлена позже')}
+      style={styles.headerButton}
     >
-      <IconSymbol name="plus" color={theme.colors.primary} />
-    </Pressable>
+      <IconSymbol name="magnifyingglass" color={colors.primary} size={20} />
+    </TouchableOpacity>
   );
 
   const renderHeaderLeft = () => (
-    <Pressable
-      onPress={() => Alert.alert("Not Implemented", "This feature is not implemented yet")}
-      style={styles.headerButtonContainer}
+    <TouchableOpacity
+      onPress={() => Alert.alert('Настройки', 'Настройки будут добавлены позже')}
+      style={styles.headerButton}
     >
-      <IconSymbol
-        name="gear"
-        color={theme.colors.primary}
-      />
-    </Pressable>
+      <IconSymbol name="gear" color={colors.primary} size={20} />
+    </TouchableOpacity>
   );
 
   return (
-    <>
-      {Platform.OS === 'ios' && (
-        <Stack.Screen
-          options={{
-            title: "Building the app...",
-            headerRight: renderHeaderRight,
-            headerLeft: renderHeaderLeft,
-          }}
+    <SafeAreaView style={[commonStyles.container, styles.container]}>
+      <Stack.Screen
+        options={{
+          title: 'Музыкальный плеер',
+          headerRight: renderHeaderRight,
+          headerLeft: renderHeaderLeft,
+          headerStyle: {
+            backgroundColor: colors.background,
+          },
+          headerTintColor: colors.text,
+        }}
+      />
+      
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Music Player Controls */}
+        <MusicPlayerControls
+          playbackState={playbackState}
+          onPlayPause={togglePlayPause}
+          onSeek={handleSeek}
         />
-      )}
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <FlatList
-          data={modalDemos}
-          renderItem={renderModalDemo}
-          keyExtractor={(item) => item.route}
-          contentContainerStyle={[
-            styles.listContainer,
-            Platform.OS !== 'ios' && styles.listContainerWithTabBar
-          ]}
-          contentInsetAdjustmentBehavior="automatic"
-          showsVerticalScrollIndicator={false}
-        />
-      </View>
-    </>
+
+        {/* Quick Stats */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statItem}>
+            <Text style={[commonStyles.title, styles.statNumber]}>{songs.length}</Text>
+            <Text style={[commonStyles.textSecondary, styles.statLabel]}>Песен</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={[commonStyles.title, styles.statNumber]}>
+              {Math.floor(songs.reduce((total, song) => total + song.duration, 0) / 60000)}
+            </Text>
+            <Text style={[commonStyles.textSecondary, styles.statLabel]}>Минут</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={[commonStyles.title, styles.statNumber]}>
+              {new Set(songs.map(song => song.artist)).size}
+            </Text>
+            <Text style={[commonStyles.textSecondary, styles.statLabel]}>Исполнителей</Text>
+          </View>
+        </View>
+
+        {/* Songs List */}
+        <View style={styles.songsSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={[commonStyles.title, styles.sectionTitle]}>
+              Локальные файлы
+            </Text>
+            <TouchableOpacity
+              onPress={() => Alert.alert('Обновить', 'Сканирование файлов будет добавлено позже')}
+              style={styles.refreshButton}
+            >
+              <IconSymbol name="arrow.clockwise" color={colors.primary} size={18} />
+            </TouchableOpacity>
+          </View>
+          
+          {songs.length === 0 ? (
+            <View style={styles.emptyState}>
+              <IconSymbol name="music.note" color={colors.textSecondary} size={48} />
+              <Text style={[commonStyles.text, styles.emptyText]}>
+                Музыкальные файлы не найдены
+              </Text>
+              <Text style={[commonStyles.textSecondary, styles.emptySubtext]}>
+                Добавьте музыкальные файлы в приложение
+              </Text>
+            </View>
+          ) : (
+            songs.map((song) => (
+              <SongItem
+                key={song.id}
+                song={song}
+                isPlaying={playbackState.currentSong?.id === song.id && playbackState.isPlaying}
+                onPress={() => handleSongPress(song)}
+              />
+            ))
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: colors.background,
+  },
+  scrollView: {
     flex: 1,
-    // backgroundColor handled dynamically
   },
-  listContainer: {
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+  scrollContent: {
+    paddingBottom: 100, // Extra space for floating tab bar
   },
-  listContainerWithTabBar: {
-    paddingBottom: 100, // Extra padding for floating tab bar
+  headerButton: {
+    padding: 8,
+    borderRadius: 8,
   },
-  demoCard: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+  statsContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 20,
+    margin: 16,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
+    elevation: 3,
+  },
+  statItem: {
     alignItems: 'center',
   },
-  demoIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  demoContent: {
-    flex: 1,
-  },
-  demoTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+  statNumber: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.primary,
     marginBottom: 4,
-    // color handled dynamically
   },
-  demoDescription: {
+  statLabel: {
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  songsSection: {
+    marginTop: 8,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+  },
+  refreshButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: colors.highlight,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+    marginHorizontal: 16,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
+    elevation: 3,
+  },
+  emptyText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtext: {
     fontSize: 14,
-    lineHeight: 18,
-    // color handled dynamically
-  },
-  headerButtonContainer: {
-    padding: 6,
-  },
-  tryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  tryButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    // color handled dynamically
+    textAlign: 'center',
   },
 });

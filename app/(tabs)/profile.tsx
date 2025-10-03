@@ -1,91 +1,240 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView, Platform } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { IconSymbol } from "@/components/IconSymbol";
-import { GlassView } from "expo-glass-effect";
-import { useTheme } from "@react-navigation/native";
+
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Stack } from 'expo-router';
+import { IconSymbol } from '@/components/IconSymbol';
+import { colors, commonStyles } from '@/styles/commonStyles';
 
 export default function ProfileScreen() {
-  const theme = useTheme();
+  const profileOptions = [
+    {
+      id: 'library',
+      title: 'Моя библиотека',
+      description: 'Управление музыкальной коллекцией',
+      icon: 'music.note.list',
+      color: colors.primary,
+    },
+    {
+      id: 'playlists',
+      title: 'Плейлисты',
+      description: 'Создание и редактирование плейлистов',
+      icon: 'music.note',
+      color: colors.secondary,
+    },
+    {
+      id: 'equalizer',
+      title: 'Эквалайзер',
+      description: 'Настройка звука',
+      icon: 'slider.horizontal.3',
+      color: colors.accent,
+    },
+    {
+      id: 'settings',
+      title: 'Настройки',
+      description: 'Общие настройки приложения',
+      icon: 'gear',
+      color: colors.textSecondary,
+    },
+    {
+      id: 'about',
+      title: 'О приложении',
+      description: 'Информация о версии и разработчике',
+      icon: 'info.circle',
+      color: colors.primary,
+    },
+  ];
+
+  const handleOptionPress = (optionId: string) => {
+    switch (optionId) {
+      case 'library':
+        Alert.alert('Библиотека', 'Функция управления библиотекой будет добавлена позже');
+        break;
+      case 'playlists':
+        Alert.alert('Плейлисты', 'Функция плейлистов будет добавлена позже');
+        break;
+      case 'equalizer':
+        Alert.alert('Эквалайзер', 'Функция эквалайзера будет добавлена позже');
+        break;
+      case 'settings':
+        Alert.alert('Настройки', 'Настройки будут добавлены позже');
+        break;
+      case 'about':
+        Alert.alert(
+          'О приложении',
+          'Музыкальный плеер для локальных файлов\nВерсия 1.0.0\n\nСоздано с помощью React Native и Expo'
+        );
+        break;
+      default:
+        console.log('Unknown option:', optionId);
+    }
+  };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]} edges={['top']}>
+    <SafeAreaView style={[commonStyles.container, styles.container]}>
+      <Stack.Screen
+        options={{
+          title: 'Профиль',
+          headerStyle: {
+            backgroundColor: colors.background,
+          },
+          headerTintColor: colors.text,
+        }}
+      />
+      
       <ScrollView
-        style={styles.container}
-        contentContainerStyle={[
-          styles.contentContainer,
-          Platform.OS !== 'ios' && styles.contentContainerWithTabBar
-        ]}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <GlassView style={[
-          styles.profileHeader,
-          Platform.OS !== 'ios' && { backgroundColor: theme.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
-        ]} glassEffectStyle="regular">
-          <IconSymbol name="person.circle.fill" size={80} color={theme.colors.primary} />
-          <Text style={[styles.name, { color: theme.colors.text }]}>John Doe</Text>
-          <Text style={[styles.email, { color: theme.dark ? '#98989D' : '#666' }]}>john.doe@example.com</Text>
-        </GlassView>
+        {/* User Info Section */}
+        <View style={styles.userSection}>
+          <View style={styles.avatarContainer}>
+            <IconSymbol name="person.fill" size={48} color={colors.card} />
+          </View>
+          <Text style={[commonStyles.title, styles.userName]}>Пользователь</Text>
+          <Text style={[commonStyles.textSecondary, styles.userEmail]}>
+            user@example.com
+          </Text>
+        </View>
 
-        <GlassView style={[
-          styles.section,
-          Platform.OS !== 'ios' && { backgroundColor: theme.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
-        ]} glassEffectStyle="regular">
-          <View style={styles.infoRow}>
-            <IconSymbol name="phone.fill" size={20} color={theme.dark ? '#98989D' : '#666'} />
-            <Text style={[styles.infoText, { color: theme.colors.text }]}>+1 (555) 123-4567</Text>
+        {/* Stats Section */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statItem}>
+            <Text style={[commonStyles.title, styles.statNumber]}>42</Text>
+            <Text style={[commonStyles.textSecondary, styles.statLabel]}>Песен</Text>
           </View>
-          <View style={styles.infoRow}>
-            <IconSymbol name="location.fill" size={20} color={theme.dark ? '#98989D' : '#666'} />
-            <Text style={[styles.infoText, { color: theme.colors.text }]}>San Francisco, CA</Text>
+          <View style={styles.statItem}>
+            <Text style={[commonStyles.title, styles.statNumber]}>3</Text>
+            <Text style={[commonStyles.textSecondary, styles.statLabel]}>Плейлистов</Text>
           </View>
-        </GlassView>
+          <View style={styles.statItem}>
+            <Text style={[commonStyles.title, styles.statNumber]}>12</Text>
+            <Text style={[commonStyles.textSecondary, styles.statLabel]}>Исполнителей</Text>
+          </View>
+        </View>
+
+        {/* Options Section */}
+        <View style={styles.optionsSection}>
+          <Text style={[commonStyles.title, styles.sectionTitle]}>Настройки</Text>
+          
+          {profileOptions.map((option) => (
+            <TouchableOpacity
+              key={option.id}
+              style={styles.optionItem}
+              onPress={() => handleOptionPress(option.id)}
+            >
+              <View style={[styles.optionIcon, { backgroundColor: option.color }]}>
+                <IconSymbol name={option.icon as any} size={24} color={colors.card} />
+              </View>
+              <View style={styles.optionContent}>
+                <Text style={[commonStyles.subtitle, styles.optionTitle]}>
+                  {option.title}
+                </Text>
+                <Text style={[commonStyles.textSecondary, styles.optionDescription]}>
+                  {option.description}
+                </Text>
+              </View>
+              <IconSymbol name="chevron.right" size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+          ))}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    // backgroundColor handled dynamically
-  },
   container: {
+    backgroundColor: colors.background,
+  },
+  scrollView: {
     flex: 1,
   },
-  contentContainer: {
-    padding: 20,
+  scrollContent: {
+    paddingBottom: 100, // Extra space for floating tab bar
   },
-  contentContainerWithTabBar: {
-    paddingBottom: 100, // Extra padding for floating tab bar
-  },
-  profileHeader: {
+  userSection: {
     alignItems: 'center',
-    borderRadius: 12,
-    padding: 32,
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 24,
+    margin: 16,
+    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+    elevation: 4,
+  },
+  avatarContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
-    gap: 12,
   },
-  name: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    // color handled dynamically
+  userName: {
+    fontSize: 22,
+    marginBottom: 4,
   },
-  email: {
-    fontSize: 16,
-    // color handled dynamically
+  userEmail: {
+    fontSize: 14,
   },
-  section: {
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 20,
-    gap: 12,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
+    elevation: 3,
   },
-  infoRow: {
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.primary,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  optionsSection: {
+    marginHorizontal: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    marginBottom: 16,
+  },
+  optionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 8,
+    boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.1)',
+    elevation: 2,
   },
-  infoText: {
-    fontSize: 16,
-    // color handled dynamically
+  optionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  optionContent: {
+    flex: 1,
+  },
+  optionTitle: {
+    marginBottom: 2,
+  },
+  optionDescription: {
+    fontSize: 13,
   },
 });
