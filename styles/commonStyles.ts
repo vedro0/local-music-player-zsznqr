@@ -1,6 +1,7 @@
 
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
+// Legacy colors for backward compatibility
 export const colors = {
   background: '#f0f0f0',
   text: '#333333',

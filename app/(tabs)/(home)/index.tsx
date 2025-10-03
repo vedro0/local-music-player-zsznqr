@@ -8,8 +8,7 @@ import { SongItem } from '@/components/SongItem';
 import { MusicPlayerControls } from '@/components/MusicPlayerControls';
 import { useMusicPlayer } from '@/hooks/useMusicPlayer';
 import { Song } from '@/types/music';
-import { colors, commonStyles } from '@/styles/commonStyles';
-import { useTheme } from '@react-navigation/native';
+import { useAppTheme } from '@/contexts/ThemeContext';
 
 // Mock data for demonstration
 const mockSongs: Song[] = [
@@ -48,7 +47,7 @@ const mockSongs: Song[] = [
 ];
 
 export default function HomeScreen() {
-  const theme = useTheme();
+  const { colors } = useAppTheme();
   const { playbackState, loadSong, togglePlayPause, seekTo } = useMusicPlayer();
   const [songs] = useState<Song[]>(mockSongs);
 
@@ -85,7 +84,7 @@ export default function HomeScreen() {
 
   const renderHeaderLeft = () => (
     <TouchableOpacity
-      onPress={() => Alert.alert('Настройки', 'Настройки будут добавлены позже')}
+      onPress={() => router.push('/(tabs)/profile')}
       style={styles.headerButton}
     >
       <IconSymbol name="gear" color={colors.primary} size={20} />
@@ -93,7 +92,7 @@ export default function HomeScreen() {
   );
 
   return (
-    <SafeAreaView style={[commonStyles.container, styles.container]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen
         options={{
           title: 'Музыкальный плеер',
@@ -119,46 +118,46 @@ export default function HomeScreen() {
         />
 
         {/* Quick Stats */}
-        <View style={styles.statsContainer}>
+        <View style={[styles.statsContainer, { backgroundColor: colors.card }]}>
           <View style={styles.statItem}>
-            <Text style={[commonStyles.title, styles.statNumber]}>{songs.length}</Text>
-            <Text style={[commonStyles.textSecondary, styles.statLabel]}>Песен</Text>
+            <Text style={[styles.statNumber, { color: colors.primary }]}>{songs.length}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Песен</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={[commonStyles.title, styles.statNumber]}>
+            <Text style={[styles.statNumber, { color: colors.primary }]}>
               {Math.floor(songs.reduce((total, song) => total + song.duration, 0) / 60000)}
             </Text>
-            <Text style={[commonStyles.textSecondary, styles.statLabel]}>Минут</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Минут</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={[commonStyles.title, styles.statNumber]}>
+            <Text style={[styles.statNumber, { color: colors.primary }]}>
               {new Set(songs.map(song => song.artist)).size}
             </Text>
-            <Text style={[commonStyles.textSecondary, styles.statLabel]}>Исполнителей</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Исполнителей</Text>
           </View>
         </View>
 
         {/* Songs List */}
         <View style={styles.songsSection}>
           <View style={styles.sectionHeader}>
-            <Text style={[commonStyles.title, styles.sectionTitle]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
               Локальные файлы
             </Text>
             <TouchableOpacity
               onPress={() => Alert.alert('Обновить', 'Сканирование файлов будет добавлено позже')}
-              style={styles.refreshButton}
+              style={[styles.refreshButton, { backgroundColor: colors.highlight }]}
             >
               <IconSymbol name="arrow.clockwise" color={colors.primary} size={18} />
             </TouchableOpacity>
           </View>
           
           {songs.length === 0 ? (
-            <View style={styles.emptyState}>
+            <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
               <IconSymbol name="music.note" color={colors.textSecondary} size={48} />
-              <Text style={[commonStyles.text, styles.emptyText]}>
+              <Text style={[styles.emptyText, { color: colors.text }]}>
                 Музыкальные файлы не найдены
               </Text>
-              <Text style={[commonStyles.textSecondary, styles.emptySubtext]}>
+              <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
                 Добавьте музыкальные файлы в приложение
               </Text>
             </View>
@@ -180,7 +179,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.background,
+    flex: 1,
   },
   scrollView: {
     flex: 1,
@@ -195,7 +194,6 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 20,
     margin: 16,
@@ -208,7 +206,6 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 28,
     fontWeight: '700',
-    color: colors.primary,
     marginBottom: 4,
   },
   statLabel: {
@@ -227,18 +224,17 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
+    fontWeight: '700',
   },
   refreshButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: colors.highlight,
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 40,
     marginHorizontal: 16,
-    backgroundColor: colors.card,
     borderRadius: 12,
     boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
     elevation: 3,

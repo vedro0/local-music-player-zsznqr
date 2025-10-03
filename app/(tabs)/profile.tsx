@@ -1,152 +1,176 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
-import { colors, commonStyles } from '@/styles/commonStyles';
+import { ThemeSelector } from '@/components/ThemeSelector';
+import { useAppTheme } from '@/contexts/ThemeContext';
+
+interface ProfileOption {
+  id: string;
+  title: string;
+  subtitle?: string;
+  icon: string;
+  action: () => void;
+}
 
 export default function ProfileScreen() {
-  const profileOptions = [
+  const { colors, themeMode } = useAppTheme();
+  const [showThemeSelector, setShowThemeSelector] = useState(false);
+
+  const getThemeDisplayName = (mode: string) => {
+    switch (mode) {
+      case 'light': return 'Светлая';
+      case 'dark': return 'Темная';
+      case 'system': return 'Системная';
+      default: return 'Системная';
+    }
+  };
+
+  const profileOptions: ProfileOption[] = [
     {
-      id: 'library',
-      title: 'Моя библиотека',
-      description: 'Управление музыкальной коллекцией',
-      icon: 'music.note.list',
-      color: colors.primary,
+      id: 'theme',
+      title: 'Тема оформления',
+      subtitle: getThemeDisplayName(themeMode),
+      icon: 'paintbrush',
+      action: () => setShowThemeSelector(true),
     },
     {
-      id: 'playlists',
-      title: 'Плейлисты',
-      description: 'Создание и редактирование плейлистов',
-      icon: 'music.note',
-      color: colors.secondary,
+      id: 'music-library',
+      title: 'Музыкальная библиотека',
+      subtitle: 'Управление локальными файлами',
+      icon: 'music.note.list',
+      action: () => Alert.alert('Библиотека', 'Настройки библиотеки будут добавлены позже'),
+    },
+    {
+      id: 'audio-quality',
+      title: 'Качество звука',
+      subtitle: 'Настройки воспроизведения',
+      icon: 'waveform',
+      action: () => Alert.alert('Качество звука', 'Настройки качества будут добавлены позже'),
     },
     {
       id: 'equalizer',
       title: 'Эквалайзер',
-      description: 'Настройка звука',
+      subtitle: 'Настройка звучания',
       icon: 'slider.horizontal.3',
-      color: colors.accent,
+      action: () => Alert.alert('Эквалайзер', 'Эквалайзер будет добавлен позже'),
     },
     {
-      id: 'settings',
-      title: 'Настройки',
-      description: 'Общие настройки приложения',
-      icon: 'gear',
-      color: colors.textSecondary,
+      id: 'storage',
+      title: 'Хранилище',
+      subtitle: 'Управление кэшем и файлами',
+      icon: 'internaldrive',
+      action: () => Alert.alert('Хранилище', 'Настройки хранилища будут добавлены позже'),
     },
     {
       id: 'about',
       title: 'О приложении',
-      description: 'Информация о версии и разработчике',
+      subtitle: 'Версия и информация',
       icon: 'info.circle',
-      color: colors.primary,
+      action: () => Alert.alert('О приложении', 'Музыкальный плеер v1.0\nСоздано с помощью React Native'),
     },
   ];
 
   const handleOptionPress = (optionId: string) => {
-    switch (optionId) {
-      case 'library':
-        Alert.alert('Библиотека', 'Функция управления библиотекой будет добавлена позже');
-        break;
-      case 'playlists':
-        Alert.alert('Плейлисты', 'Функция плейлистов будет добавлена позже');
-        break;
-      case 'equalizer':
-        Alert.alert('Эквалайзер', 'Функция эквалайзера будет добавлена позже');
-        break;
-      case 'settings':
-        Alert.alert('Настройки', 'Настройки будут добавлены позже');
-        break;
-      case 'about':
-        Alert.alert(
-          'О приложении',
-          'Музыкальный плеер для локальных файлов\nВерсия 1.0.0\n\nСоздано с помощью React Native и Expo'
-        );
-        break;
-      default:
-        console.log('Unknown option:', optionId);
+    const option = profileOptions.find(opt => opt.id === optionId);
+    if (option) {
+      option.action();
     }
   };
 
   return (
-    <SafeAreaView style={[commonStyles.container, styles.container]}>
-      <Stack.Screen
-        options={{
-          title: 'Профиль',
-          headerStyle: {
-            backgroundColor: colors.background,
-          },
-          headerTintColor: colors.text,
-        }}
+    <>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <Stack.Screen
+          options={{
+            title: 'Настройки',
+            headerStyle: {
+              backgroundColor: colors.background,
+            },
+            headerTintColor: colors.text,
+          }}
+        />
+        
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Profile Header */}
+          <View style={[styles.profileHeader, { backgroundColor: colors.card }]}>
+            <View style={[styles.avatarContainer, { backgroundColor: colors.primary }]}>
+              <IconSymbol name="person.fill" size={32} color="white" />
+            </View>
+            <Text style={[styles.profileName, { color: colors.text }]}>
+              Музыкальный плеер
+            </Text>
+            <Text style={[styles.profileSubtitle, { color: colors.textSecondary }]}>
+              Локальные аудиофайлы
+            </Text>
+          </View>
+
+          {/* Settings Options */}
+          <View style={styles.optionsSection}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Настройки
+            </Text>
+            
+            <View style={[styles.optionsContainer, { backgroundColor: colors.card }]}>
+              {profileOptions.map((option, index) => (
+                <TouchableOpacity
+                  key={option.id}
+                  style={[
+                    styles.optionItem,
+                    { borderBottomColor: colors.border },
+                    index === profileOptions.length - 1 && styles.lastOptionItem,
+                  ]}
+                  onPress={() => handleOptionPress(option.id)}
+                >
+                  <View style={[styles.optionIconContainer, { backgroundColor: colors.highlight }]}>
+                    <IconSymbol name={option.icon} size={20} color={colors.primary} />
+                  </View>
+                  <View style={styles.optionContent}>
+                    <Text style={[styles.optionTitle, { color: colors.text }]}>
+                      {option.title}
+                    </Text>
+                    {option.subtitle && (
+                      <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>
+                        {option.subtitle}
+                      </Text>
+                    )}
+                  </View>
+                  <IconSymbol name="chevron.right" size={16} color={colors.textSecondary} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* App Info */}
+          <View style={styles.appInfoSection}>
+            <Text style={[styles.appInfoText, { color: colors.textSecondary }]}>
+              Версия 1.0.0
+            </Text>
+            <Text style={[styles.appInfoText, { color: colors.textSecondary }]}>
+              Создано с помощью React Native
+            </Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+
+      {/* Theme Selector Modal */}
+      <ThemeSelector
+        visible={showThemeSelector}
+        onClose={() => setShowThemeSelector(false)}
       />
-      
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* User Info Section */}
-        <View style={styles.userSection}>
-          <View style={styles.avatarContainer}>
-            <IconSymbol name="person.fill" size={48} color={colors.card} />
-          </View>
-          <Text style={[commonStyles.title, styles.userName]}>Пользователь</Text>
-          <Text style={[commonStyles.textSecondary, styles.userEmail]}>
-            user@example.com
-          </Text>
-        </View>
-
-        {/* Stats Section */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={[commonStyles.title, styles.statNumber]}>42</Text>
-            <Text style={[commonStyles.textSecondary, styles.statLabel]}>Песен</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={[commonStyles.title, styles.statNumber]}>3</Text>
-            <Text style={[commonStyles.textSecondary, styles.statLabel]}>Плейлистов</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={[commonStyles.title, styles.statNumber]}>12</Text>
-            <Text style={[commonStyles.textSecondary, styles.statLabel]}>Исполнителей</Text>
-          </View>
-        </View>
-
-        {/* Options Section */}
-        <View style={styles.optionsSection}>
-          <Text style={[commonStyles.title, styles.sectionTitle]}>Настройки</Text>
-          
-          {profileOptions.map((option) => (
-            <TouchableOpacity
-              key={option.id}
-              style={styles.optionItem}
-              onPress={() => handleOptionPress(option.id)}
-            >
-              <View style={[styles.optionIcon, { backgroundColor: option.color }]}>
-                <IconSymbol name={option.icon as any} size={24} color={colors.card} />
-              </View>
-              <View style={styles.optionContent}>
-                <Text style={[commonStyles.subtitle, styles.optionTitle]}>
-                  {option.title}
-                </Text>
-                <Text style={[commonStyles.textSecondary, styles.optionDescription]}>
-                  {option.description}
-                </Text>
-              </View>
-              <IconSymbol name="chevron.right" size={16} color={colors.textSecondary} />
-            </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.background,
+    flex: 1,
   },
   scrollView: {
     flex: 1,
@@ -154,87 +178,81 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 100, // Extra space for floating tab bar
   },
-  userSection: {
+  profileHeader: {
     alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: 16,
     padding: 24,
     margin: 16,
-    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
-    elevation: 4,
+    borderRadius: 16,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
+    elevation: 3,
   },
   avatarContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
   },
-  userName: {
-    fontSize: 22,
-    marginBottom: 4,
-  },
-  userEmail: {
-    fontSize: 14,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 20,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
-    elevation: 3,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statNumber: {
+  profileName: {
     fontSize: 24,
     fontWeight: '700',
-    color: colors.primary,
     marginBottom: 4,
   },
-  statLabel: {
-    fontSize: 12,
-    textAlign: 'center',
+  profileSubtitle: {
+    fontSize: 16,
   },
   optionsSection: {
-    marginHorizontal: 16,
+    marginTop: 8,
   },
   sectionTitle: {
     fontSize: 20,
-    marginBottom: 16,
+    fontWeight: '700',
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  optionsContainer: {
+    marginHorizontal: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
+    elevation: 3,
   },
   optionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: 12,
     padding: 16,
-    marginBottom: 8,
-    boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.1)',
-    elevation: 2,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  optionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  lastOptionItem: {
+    borderBottomWidth: 0,
+  },
+  optionIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: 12,
   },
   optionContent: {
     flex: 1,
   },
   optionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
     marginBottom: 2,
   },
-  optionDescription: {
+  optionSubtitle: {
     fontSize: 13,
+  },
+  appInfoSection: {
+    alignItems: 'center',
+    marginTop: 32,
+    marginBottom: 16,
+  },
+  appInfoText: {
+    fontSize: 12,
+    marginBottom: 4,
   },
 });
