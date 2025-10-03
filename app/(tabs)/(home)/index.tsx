@@ -5,12 +5,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, router } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { SongItem } from '@/components/SongItem';
+import { TopSongsSection } from '@/components/TopSongsSection';
 import { MusicPlayerControls } from '@/components/MusicPlayerControls';
 import { useMusicPlayer } from '@/hooks/useMusicPlayer';
-import { Song } from '@/types/music';
+import { Song, TopSongsData } from '@/types/music';
 import { useAppTheme } from '@/contexts/ThemeContext';
+import { songStatsService } from '@/services/songStatsService';
 
-// Mock data for demonstration
+// Mock data for demonstration - with varied dates and play counts
 const mockSongs: Song[] = [
   {
     id: '1',
@@ -44,12 +46,50 @@ const mockSongs: Song[] = [
     duration: 300000, // 5 minutes
     uri: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
   },
+  {
+    id: '5',
+    title: 'Новая песня',
+    artist: 'Новый исполнитель',
+    album: 'Новый альбом',
+    duration: 195000,
+    uri: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
+  },
+  {
+    id: '6',
+    title: 'Популярный хит',
+    artist: 'Популярный исполнитель',
+    album: 'Хиты',
+    duration: 220000,
+    uri: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
+  },
 ];
 
 export default function HomeScreen() {
   const { colors } = useAppTheme();
   const { playbackState, loadSong, togglePlayPause, seekTo } = useMusicPlayer();
   const [songs] = useState<Song[]>(mockSongs);
+  const [topSongs, setTopSongs] = useState<TopSongsData>({
+    recentlyAdded: [],
+    mostPlayed: [],
+  });
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    loadTopSongs();
+  }, [songs]);
+
+  const loadTopSongs = async () => {
+    try {
+      const topSongsData = await songStatsService.getTopSongs(songs);
+      setTopSongs(topSongsData);
+      console.log('Top songs loaded:', {
+        recentlyAdded: topSongsData.recentlyAdded.length,
+        mostPlayed: topSongsData.mostPlayed.length,
+      });
+    } catch (error) {
+      console.error('Error loading top songs:', error);
+    }
+  };
 
   const handleSongPress = async (song: Song) => {
     try {
@@ -59,6 +99,10 @@ export default function HomeScreen() {
       setTimeout(() => {
         togglePlayPause();
       }, 500);
+      // Refresh top songs after playing to update stats
+      setTimeout(() => {
+        loadTopSongs();
+      }, 1000);
     } catch (error) {
       console.error('Error loading song:', error);
       Alert.alert('Ошибка', 'Не удалось загрузить песню');
@@ -71,6 +115,13 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('Error seeking:', error);
     }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadTopSongs();
+    setRefreshing(false);
+    Alert.alert('Обновлено', 'Статистика песен обновлена');
   };
 
   const renderHeaderRight = () => (
@@ -137,17 +188,46 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Songs List */}
+        {/* Top Songs - Recently Added */}
+        <TopSongsSection
+          title="Недавно добавленные"
+          subtitle="Последние добавленные песни"
+          icon="clock.badge.plus"
+          songs={topSongs.recentlyAdded}
+          currentSong={playbackState.currentSong}
+          isPlaying={playbackState.isPlaying}
+          onSongPress={handleSongPress}
+          onViewAll={() => Alert.alert('Все недавние', 'Полный список недавно добавленных песен')}
+        />
+
+        {/* Top Songs - Most Played */}
+        <TopSongsSection
+          title="Самые популярные"
+          subtitle="Наиболее прослушиваемые песни"
+          icon="chart.bar.fill"
+          songs={topSongs.mostPlayed}
+          currentSong={playbackState.currentSong}
+          isPlaying={playbackState.isPlaying}
+          onSongPress={handleSongPress}
+          onViewAll={() => Alert.alert('Все популярные', 'Полный список популярных песен')}
+        />
+
+        {/* All Songs Section */}
         <View style={styles.songsSection}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Локальные файлы
+              Все локальные файлы
             </Text>
             <TouchableOpacity
-              onPress={() => Alert.alert('Обновить', 'Сканирование файлов будет добавлено позже')}
+              onPress={handleRefresh}
               style={[styles.refreshButton, { backgroundColor: colors.highlight }]}
+              disabled={refreshing}
             >
-              <IconSymbol name="arrow.clockwise" color={colors.primary} size={18} />
+              <IconSymbol 
+                name={refreshing ? "arrow.clockwise" : "arrow.clockwise"} 
+                color={colors.primary} 
+                size={18} 
+              />
             </TouchableOpacity>
           </View>
           
@@ -213,7 +293,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   songsSection: {
-    marginTop: 8,
+    marginTop: 24,
   },
   sectionHeader: {
     flexDirection: 'row',

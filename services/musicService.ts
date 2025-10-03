@@ -1,6 +1,7 @@
 
 import { Audio } from 'expo-av';
 import { Song, PlaybackState } from '@/types/music';
+import { songStatsService } from './songStatsService';
 
 class MusicService {
   private sound: Audio.Sound | null = null;
@@ -12,6 +13,7 @@ class MusicService {
     currentSong: null,
   };
   private listeners: ((state: PlaybackState) => void)[] = [];
+  private playCountIncremented = false;
 
   constructor() {
     this.setupAudio();
@@ -47,6 +49,10 @@ class MusicService {
 
       this.sound = sound;
       this.currentSong = song;
+      this.playCountIncremented = false;
+
+      // Add song to stats if not already tracked
+      await songStatsService.addSong(song);
 
       // Set up playback status update
       this.sound.setOnPlaybackStatusUpdate((status) => {
@@ -57,6 +63,18 @@ class MusicService {
             duration: status.durationMillis || 0,
             currentSong: this.currentSong,
           };
+
+          // Increment play count when song reaches 30% completion
+          if (
+            status.isPlaying &&
+            !this.playCountIncremented &&
+            status.positionMillis &&
+            status.durationMillis &&
+            status.positionMillis > status.durationMillis * 0.3
+          ) {
+            this.incrementPlayCount();
+          }
+
           this.notifyListeners();
         }
       });
@@ -64,6 +82,14 @@ class MusicService {
       console.log('Song loaded successfully');
     } catch (error) {
       console.error('Error loading song:', error);
+    }
+  }
+
+  private async incrementPlayCount() {
+    if (this.currentSong && !this.playCountIncremented) {
+      await songStatsService.incrementPlayCount(this.currentSong.id);
+      this.playCountIncremented = true;
+      console.log('Play count incremented for:', this.currentSong.title);
     }
   }
 

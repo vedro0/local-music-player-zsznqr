@@ -6,6 +6,7 @@ import { Stack } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { ThemeSelector } from '@/components/ThemeSelector';
 import { useAppTheme } from '@/contexts/ThemeContext';
+import { songStatsService } from '@/services/songStatsService';
 
 interface ProfileOption {
   id: string;
@@ -16,155 +17,181 @@ interface ProfileOption {
 }
 
 export default function ProfileScreen() {
-  const { colors, themeMode } = useAppTheme();
+  const { colors, mode, setMode } = useAppTheme();
   const [showThemeSelector, setShowThemeSelector] = useState(false);
 
   const getThemeDisplayName = (mode: string) => {
     switch (mode) {
-      case 'light': return 'Светлая';
-      case 'dark': return 'Темная';
-      case 'system': return 'Системная';
-      default: return 'Системная';
+      case 'light':
+        return 'Светлая';
+      case 'dark':
+        return 'Темная';
+      case 'system':
+        return 'Системная';
+      default:
+        return 'Системная';
     }
   };
 
-  const profileOptions: ProfileOption[] = [
+  const handleOptionPress = (optionId: string) => {
+    console.log('Profile option pressed:', optionId);
+  };
+
+  const handleClearStats = () => {
+    Alert.alert(
+      'Очистить статистику',
+      'Это действие удалит всю статистику прослушивания песен. Продолжить?',
+      [
+        {
+          text: 'Отмена',
+          style: 'cancel',
+        },
+        {
+          text: 'Очистить',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await songStatsService.clearStats();
+              Alert.alert('Готово', 'Статистика песен очищена');
+            } catch (error) {
+              console.error('Error clearing stats:', error);
+              Alert.alert('Ошибка', 'Не удалось очистить статистику');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const options: ProfileOption[] = [
     {
       id: 'theme',
       title: 'Тема оформления',
-      subtitle: getThemeDisplayName(themeMode),
+      subtitle: getThemeDisplayName(mode),
       icon: 'paintbrush',
       action: () => setShowThemeSelector(true),
     },
     {
-      id: 'music-library',
-      title: 'Музыкальная библиотека',
-      subtitle: 'Управление локальными файлами',
-      icon: 'music.note.list',
-      action: () => Alert.alert('Библиотека', 'Настройки библиотеки будут добавлены позже'),
-    },
-    {
-      id: 'audio-quality',
-      title: 'Качество звука',
-      subtitle: 'Настройки воспроизведения',
-      icon: 'waveform',
-      action: () => Alert.alert('Качество звука', 'Настройки качества будут добавлены позже'),
+      id: 'storage',
+      title: 'Управление хранилищем',
+      subtitle: 'Очистка кэша и данных',
+      icon: 'internaldrive',
+      action: () => handleOptionPress('storage'),
     },
     {
       id: 'equalizer',
       title: 'Эквалайзер',
-      subtitle: 'Настройка звучания',
+      subtitle: 'Настройка звука',
       icon: 'slider.horizontal.3',
-      action: () => Alert.alert('Эквалайзер', 'Эквалайзер будет добавлен позже'),
+      action: () => handleOptionPress('equalizer'),
     },
     {
-      id: 'storage',
-      title: 'Хранилище',
-      subtitle: 'Управление кэшем и файлами',
-      icon: 'internaldrive',
-      action: () => Alert.alert('Хранилище', 'Настройки хранилища будут добавлены позже'),
+      id: 'import',
+      title: 'Импорт музыки',
+      subtitle: 'Добавить файлы из хранилища',
+      icon: 'square.and.arrow.down',
+      action: () => handleOptionPress('import'),
+    },
+    {
+      id: 'export',
+      title: 'Экспорт плейлистов',
+      subtitle: 'Сохранить плейлисты',
+      icon: 'square.and.arrow.up',
+      action: () => handleOptionPress('export'),
+    },
+    {
+      id: 'clear-stats',
+      title: 'Очистить статистику',
+      subtitle: 'Сбросить счетчики прослушиваний',
+      icon: 'trash',
+      action: handleClearStats,
     },
     {
       id: 'about',
       title: 'О приложении',
       subtitle: 'Версия и информация',
       icon: 'info.circle',
-      action: () => Alert.alert('О приложении', 'Музыкальный плеер v1.0\nСоздано с помощью React Native'),
+      action: () => handleOptionPress('about'),
     },
   ];
 
-  const handleOptionPress = (optionId: string) => {
-    const option = profileOptions.find(opt => opt.id === optionId);
-    if (option) {
-      option.action();
-    }
-  };
-
   return (
-    <>
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <Stack.Screen
-          options={{
-            title: 'Настройки',
-            headerStyle: {
-              backgroundColor: colors.background,
-            },
-            headerTintColor: colors.text,
-          }}
-        />
-        
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Profile Header */}
-          <View style={[styles.profileHeader, { backgroundColor: colors.card }]}>
-            <View style={[styles.avatarContainer, { backgroundColor: colors.primary }]}>
-              <IconSymbol name="person.fill" size={32} color="white" />
-            </View>
-            <Text style={[styles.profileName, { color: colors.text }]}>
-              Музыкальный плеер
-            </Text>
-            <Text style={[styles.profileSubtitle, { color: colors.textSecondary }]}>
-              Локальные аудиофайлы
-            </Text>
-          </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <Stack.Screen
+        options={{
+          title: 'Профиль',
+          headerStyle: {
+            backgroundColor: colors.background,
+          },
+          headerTintColor: colors.text,
+        }}
+      />
 
-          {/* Settings Options */}
-          <View style={styles.optionsSection}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Настройки
-            </Text>
-            
-            <View style={[styles.optionsContainer, { backgroundColor: colors.card }]}>
-              {profileOptions.map((option, index) => (
-                <TouchableOpacity
-                  key={option.id}
-                  style={[
-                    styles.optionItem,
-                    { borderBottomColor: colors.border },
-                    index === profileOptions.length - 1 && styles.lastOptionItem,
-                  ]}
-                  onPress={() => handleOptionPress(option.id)}
-                >
-                  <View style={[styles.optionIconContainer, { backgroundColor: colors.highlight }]}>
-                    <IconSymbol name={option.icon} size={20} color={colors.primary} />
-                  </View>
-                  <View style={styles.optionContent}>
-                    <Text style={[styles.optionTitle, { color: colors.text }]}>
-                      {option.title}
-                    </Text>
-                    {option.subtitle && (
-                      <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>
-                        {option.subtitle}
-                      </Text>
-                    )}
-                  </View>
-                  <IconSymbol name="chevron.right" size={16} color={colors.textSecondary} />
-                </TouchableOpacity>
-              ))}
-            </View>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Profile Header */}
+        <View style={[styles.profileHeader, { backgroundColor: colors.card }]}>
+          <View style={[styles.avatarContainer, { backgroundColor: colors.primary }]}>
+            <IconSymbol name="person.fill" size={32} color="white" />
           </View>
+          <Text style={[styles.profileName, { color: colors.text }]}>
+            Музыкальный плеер
+          </Text>
+          <Text style={[styles.profileSubtitle, { color: colors.textSecondary }]}>
+            Локальные файлы
+          </Text>
+        </View>
 
-          {/* App Info */}
-          <View style={styles.appInfoSection}>
-            <Text style={[styles.appInfoText, { color: colors.textSecondary }]}>
-              Версия 1.0.0
-            </Text>
-            <Text style={[styles.appInfoText, { color: colors.textSecondary }]}>
-              Создано с помощью React Native
-            </Text>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+        {/* Options List */}
+        <View style={styles.optionsContainer}>
+          {options.map((option) => (
+            <TouchableOpacity
+              key={option.id}
+              style={[
+                styles.optionItem,
+                { backgroundColor: colors.card, borderColor: colors.border }
+              ]}
+              onPress={option.action}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.optionIcon, { backgroundColor: colors.highlight }]}>
+                <IconSymbol name={option.icon} size={20} color={colors.primary} />
+              </View>
+              <View style={styles.optionContent}>
+                <Text style={[styles.optionTitle, { color: colors.text }]}>
+                  {option.title}
+                </Text>
+                {option.subtitle && (
+                  <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>
+                    {option.subtitle}
+                  </Text>
+                )}
+              </View>
+              <IconSymbol name="chevron.right" size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* App Info */}
+        <View style={styles.appInfo}>
+          <Text style={[styles.appInfoText, { color: colors.textSecondary }]}>
+            Версия 1.0.0
+          </Text>
+          <Text style={[styles.appInfoText, { color: colors.textSecondary }]}>
+            Музыкальный плеер для локальных файлов
+          </Text>
+        </View>
+      </ScrollView>
 
       {/* Theme Selector Modal */}
       <ThemeSelector
         visible={showThemeSelector}
         onClose={() => setShowThemeSelector(false)}
       />
-    </>
+    </SafeAreaView>
   );
 }
 
@@ -202,35 +229,24 @@ const styles = StyleSheet.create({
   profileSubtitle: {
     fontSize: 16,
   },
-  optionsSection: {
-    marginTop: 8,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginHorizontal: 16,
-    marginBottom: 12,
-  },
   optionsContainer: {
-    marginHorizontal: 16,
-    borderRadius: 16,
-    overflow: 'hidden',
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
-    elevation: 3,
+    marginTop: 8,
   },
   optionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginHorizontal: 16,
+    marginVertical: 4,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.1)',
+    elevation: 2,
   },
-  lastOptionItem: {
-    borderBottomWidth: 0,
-  },
-  optionIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  optionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -244,9 +260,9 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   optionSubtitle: {
-    fontSize: 13,
+    fontSize: 14,
   },
-  appInfoSection: {
+  appInfo: {
     alignItems: 'center',
     marginTop: 32,
     marginBottom: 16,
